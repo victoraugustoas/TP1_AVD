@@ -8,15 +8,8 @@ from pprint import pprint
 fatores = []
 
 with open(sys.argv[1]) as arq:
-    # reader = csv.reader(arq)
     reader = csv.DictReader(arq)
     for i, row in enumerate(reader):
-        # aux = {
-        #     "name": row[0],
-        #     "alias": i+1,
-        #     "min": row[1],
-        #     "max": row[2]
-        # }
         row['alias'] = i+1
         fatores.append(row)
 
@@ -103,6 +96,7 @@ def getFator(alias):
             return fator
 
 
+# faz as perguntas para as observações e armazena os valores
 obs = []
 stringPergunta = ''
 print('Digite os valores do experimento:')
@@ -116,25 +110,26 @@ for pergunta in matrix:
     print(stringPergunta)
 
     valores = int(input())
+    obsAux = []
     mean = 0
-    tam = 0
     while (valores != "pause"):
         mean += int(valores)
-        tam += 1
+        obsAux.append(int(valores))
         valores = input()
 
-    obs.append(mean/tam)
+    # obs.append(mean/tam)
+    obs.append(obsAux)
     stringPergunta = ''
 
-obs = np.array([int(num) for num in obs])
+obsMean = np.array([np.array(numArr).mean() for numArr in obs])
 matrixTranspose = matrix.transpose()
 newResult = []
 for line in matrixTranspose:
-    aux = line * obs
+    aux = line * obsMean
     pesoAtual = 0
     for n in aux:
         pesoAtual += n
-    pesoAtual = pesoAtual / len(obs)
+    pesoAtual = pesoAtual / len(obsMean)
     newResult.append(pesoAtual)
 
 # criando o novo conjunto de combinações
@@ -146,10 +141,10 @@ for n in setOrdered:
 
 # print(newResult, newSetOrdered)
 
-mediaObs = obs.mean()
+mediaObs = obsMean.mean()
 sst = 0
 for n in range(0, len(obs)):
-    sst += (obs[n] - mediaObs) ** 2
+    sst += (obsMean[n] - mediaObs) ** 2
 
 importancia = []
 newResult = newResult[1:]
@@ -170,8 +165,16 @@ def getNomeInteracao(num):
     return nameFator
 
 
+matrixError = np.matrix(obs)
+erro = 0
+for i, line in enumerate(matrixError):
+    erroAux = np.subtract(line, obsMean[i])
+    erroAux = np.power(erroAux, 2)
+    erro += np.sum(erroAux)
+
 print('Resultado das importâncias dos valores são:')
 print('------')
 for i, interacao in enumerate(newSetOrdered):
     print(getNomeInteracao(interacao), str(importancia[i]) + "%")
+print('erro;', str(round(erro/sst, 2)) + "%")
 print('------')

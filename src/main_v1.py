@@ -176,5 +176,5 @@ print('Resultado das importâncias dos valores são:')
 print('------')
 for i, interacao in enumerate(newSetOrdered):
     print(getNomeInteracao(interacao), str(importancia[i]) + "%")
-print('erro;', str(round(erro/sst, 2)) + "%")
+print('erro;', str(round((erro/sst)*100, 2)) + "%")
 print('------')

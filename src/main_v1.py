@@ -109,12 +109,12 @@ for pergunta in matrix:
     stringPergunta += "??? \nDigite pause, para parar de digitar os valores. \n"
     print(stringPergunta)
 
-    valores = int(input())
+    valores = float(input())
     obsAux = []
     mean = 0
     while (valores != "pause"):
-        mean += int(valores)
-        obsAux.append(int(valores))
+        mean += float(valores)
+        obsAux.append(float(valores))
         valores = input()
 
     # obs.append(mean/tam)
@@ -171,6 +171,9 @@ for i, line in enumerate(matrixError):
     erroAux = np.subtract(line, obsMean[i])
     erroAux = np.power(erroAux, 2)
     erro += np.sum(erroAux)
+
+# adiciona o erro ao SST, como mostrado no slide 32
+sst += erro
 
 print('Resultado das importâncias dos valores são:')
 print('------')

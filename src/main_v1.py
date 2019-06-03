@@ -7,14 +7,19 @@ from pprint import pprint
 # vetor de observações
 fatores = []
 
+# abre o arquivo de fatores
 with open(sys.argv[1]) as arq:
     reader = csv.DictReader(arq)
     for i, row in enumerate(reader):
         row['alias'] = i+1
         fatores.append(row)
 
+# numero de fatores
 numberOfK = len(fatores)
+# cria a matriz com 1's
 matrix = np.ones((2 ** numberOfK, 2 ** numberOfK))
+
+# converte um numero intero para binario
 
 
 def intToBinary(maxValue, size):
@@ -27,7 +32,7 @@ def intToBinary(maxValue, size):
 for line in range(0, 2**numberOfK):
     matrix[line][1:numberOfK + 1] = intToBinary(line, numberOfK)
     lineMatrix = matrix[line][1:numberOfK + 1]
-    # transforma 0 em -1
+    # transforma 0 do numero binario em -1
     matrix[line][1:numberOfK +
                  1] = [-1 if (number == 0) else 1 for number in lineMatrix]
 
@@ -49,14 +54,15 @@ number = ''
 for i in range(1, numberOfK + 1):
     number += str(i)
 
-# pega todas as combinações de numeros, de zero até k
+# pega todas as combinações de números, de 1 até k
 lst = []
-lst.append(number)
+lst.append(number)  # inclui a combinação maior, que é o proprio número
 for perm in range(0, numberOfK - 1):
     for anagram in anagrams(number):
         lst.append(anagram[0:perm + 1])
 
-# ordena numeros
+# ordena numeros gerados nas combinações, para excluir numeros repetidos
+# ex: 12 e 21, apos ordenar ficaria 12, 12
 lstOrdered = []
 lstAux = []
 for number in lst:
@@ -84,13 +90,20 @@ setOrdered = sorted([int(num) for num in setOrdered])
 for line in range(0, 2**numberOfK):
     mult = 1
     for i, num in enumerate(setOrdered):
+        # para cada combinação, acessa o indice na matriz e o multiplica
         for idx in str(num):
             mult *= matrix[line][int(idx)]
+        # recebe o resultado da multiplicação, o vetor de combinações tem o mesmo
+        # tamanho que o vetor de [numberOfK + 1:] presente na matriz
         matrix[line][numberOfK + 1:][i] = mult
         mult = 1
 
 
 def getFator(alias):
+    """
+    função que recupera o fator de acordo com seu apelido
+    ex de apelido: 1, 2, 3 ...
+    """
     for fator in fatores:
         if (fator['alias'] == alias):
             return fator
@@ -111,51 +124,58 @@ for pergunta in matrix:
 
     valores = float(input())
     obsAux = []
-    mean = 0
     while (valores != "pause"):
         mean += float(valores)
         obsAux.append(float(valores))
         valores = input()
 
-    # obs.append(mean/tam)
+    # guarda os valores dos experimentos em um vetor de vetores
     obs.append(obsAux)
     stringPergunta = ''
 
+# tira a media dos valores dos experimentos e os salva em um vetor
 obsMean = np.array([np.array(numArr).mean() for numArr in obs])
+# multiplica as colunas com o vetor de y, somando os valores ao final
 matrixTranspose = matrix.transpose()
 newResult = []
 for line in matrixTranspose:
     aux = line * obsMean
-    pesoAtual = 0
-    for n in aux:
-        pesoAtual += n
+    pesoAtual = np.sum(aux)
     pesoAtual = pesoAtual / len(obsMean)
     newResult.append(pesoAtual)
 
-# criando o novo conjunto de combinações
+# criando o novo conjunto de combinações, com os numeros 1, 2, 3, ...
+# e as combinações, 12, 13, 123, 1234 ...
 newSetOrdered = []
 for n in range(1, numberOfK+1):
     newSetOrdered.append(n)
 for n in setOrdered:
     newSetOrdered.append(n)
 
-# print(newResult, newSetOrdered)
-
+# calculo do sst, pagina 23 do slide de AVD
 mediaObs = obsMean.mean()
 sst = 0
 for n in range(0, len(obs)):
     sst += (obsMean[n] - mediaObs) ** 2
 
 importancia = []
+# exlui a primeira posição, pois é a importancia da coluna I
 newResult = newResult[1:]
 for n in newResult:
-    importancia.append(2 ** numberOfK * n ** 2)
+    importancia.append(2 ** numberOfK * n ** 2)  # pagina 20 do slide de AVD
 
-importancia = (importancia / sst) * 100
+importancia = (importancia / sst) * 100  # transforma em porcentagem
 importancia = [round(n, 2) for n in importancia]
 
 
 def getNomeInteracao(num):
+    """
+    Retorna uma string com o nome das interações dos fatores
+    ex:
+    memória;
+    cache;
+    memoria;cache;
+    """
     num = str(num)
     nameFator = ''
     for numFator in num:
@@ -165,12 +185,14 @@ def getNomeInteracao(num):
     return nameFator
 
 
-matrixError = np.matrix(obs)
+# cálculo do erro
+matrixError = np.matrix(obs)  # transforma o vetor de observações em matriz
 erro = 0
 for i, line in enumerate(matrixError):
+    # diferença do valor estimado para o valor medido, valor estimado é a média
     erroAux = np.subtract(line, obsMean[i])
-    erroAux = np.power(erroAux, 2)
-    erro += np.sum(erroAux)
+    erroAux = np.power(erroAux, 2)  # eleva todos os valores ao quadrado
+    erro += np.sum(erroAux)  # soma todos os valores
 
 # adiciona o erro ao SST, como mostrado no slide 32
 sst += erro
